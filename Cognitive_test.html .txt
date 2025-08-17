@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Cognitive Ability Test</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    .hidden { display: none; }
+    .question img { width: 100px; margin: 10px; cursor: pointer; border: 2px solid transparent; }
+    .question img:hover { border: 2px solid blue; }
+    button { margin: 15px; padding: 10px 20px; font-size: 16px; }
+  </style>
+</head>
+<body>
+  <h2>Cognitive Ability Screening Test</h2>
+
+  <!-- Step 1: Demographics -->
+  <div id="startForm">
+    <label>Age: <input type="number" id="age"></label><br><br>
+    <label>Gender: 
+      <select id="gender">
+        <option value="">Select</option>
+        <option>Male</option>
+        <option>Female</option>
+        <option>Other</option>
+      </select>
+    </label><br><br>
+    <label>Education: 
+      <select id="education">
+        <option value="">Select</option>
+        <option>Primary</option>
+        <option>Secondary</option>
+        <option>Higher Secondary</option>
+        <option>Graduate</option>
+        <option>Post Graduate</option>
+      </select>
+    </label><br><br>
+    <button onclick="startTest()">Start Test</button>
+  </div>
+
+  <!-- Step 2: Test Questions -->
+  <div id="testSection" class="hidden">
+    <div id="questionBox"></div>
+    <button onclick="nextQuestion()">Next</button>
+  </div>
+
+  <!-- Step 3: Result -->
+  <div id="resultSection" class="hidden">
+    <h3>Test Completed</h3>
+    <p id="scoreText"></p>
+    <button onclick="downloadCSV()">Download CSV</button>
+    <button onclick="restart()">New Participant</button>
+  </div>
+
+<script>
+let currentQ = 0;
+let score = 0;
+let responses = [];
+let records = [];
+
+// 10 pictorial questions (replace image URLs with your own later)
+let questions = [
+  {
+    q: "Which shape completes the sequence?",
+    options: ["https://i.imgur.com/1.png","https://i.imgur.com/2.png","https://i.imgur.com/3.png"],
+    answer: 0
+  },
+  {
+    q: "Odd one out?",
+    options: ["https://i.imgur.com/apple.png","https://i.imgur.com/banana.png","https://i.imgur.com/orange.png","https://i.imgur.com/car.png"],
+    answer: 3
+  },
+  {
+    q: "Triangle : Pyramid :: Circle : ?",
+    options: ["https://i.imgur.com/sphere.png","https://i.imgur.com/cube.png","https://i.imgur.com/cone.png"],
+    answer: 0
+  },
+  {
+    q: "Find the hidden figure",
+    options: ["https://i.imgur.com/hid1.png","https://i.imgur.com/hid2.png","https://i.imgur.com/hid3.png"],
+    answer: 1
+  },
+  {
+    q: "Which comes next?",
+    options: ["https://i.imgur.com/pat1.png","https://i.imgur.com/pat2.png","https://i.imgur.com/pat3.png"],
+    answer: 2
+  },
+  {
+    q: "Memory Recall: Which was NOT shown? (dog, ball, apple, car)",
+    options: ["https://i.imgur.com/cat.png","https://i.imgur.com/ball.png","https://i.imgur.com/apple.png","https://i.imgur.com/car.png"],
+    answer: 0
+  },
+  {
+    q: "Which is rotated version of the first?",
+    options: ["https://i.imgur.com/rot1.png","https://i.imgur.com/rot2.png","https://i.imgur.com/rot3.png"],
+    answer: 2
+  },
+  {
+    q: "Select matching pair",
+    options: ["https://i.imgur.com/mat1.png","https://i.imgur.com/mat2.png","https://i.imgur.com/mat3.png"],
+    answer: 1
+  },
+  {
+    q: "Which picture completes the matrix?",
+    options: ["https://i.imgur.com/mat4.png","https://i.imgur.com/mat5.png","https://i.imgur.com/mat6.png"],
+    answer: 2
+  },
+  {
+    q: "Which object is bigger in real life?",
+    options: ["https://i.imgur.com/ant.png","https://i.imgur.com/elephant.png","https://i.imgur.com/dog.png"],
+    answer: 1
+  }
+];
+
+function startTest(){
+  let age=document.getElementById("age").value;
+  let gender=document.getElementById("gender").value;
+  let education=document.getElementById("education").value;
+  if(!age||!gender||!education){ alert("Please fill all fields"); return; }
+  document.getElementById("startForm").classList.add("hidden");
+  document.getElementById("testSection").classList.remove("hidden");
+  currentQ=0; score=0; responses=[];
+  showQuestion();
+}
+
+function showQuestion(){
+  let q=questions[currentQ];
+  let box=document.getElementById("questionBox");
+  box.innerHTML="<h3>Q"+(currentQ+1)+". "+q.q+"</h3>";
+  q.options.forEach((opt,i)=>{
+    box.innerHTML+=`<img src="${opt}" onclick="selectAnswer(${i})">`;
+  });
+}
+
+function selectAnswer(i){
+  responses[currentQ]=i;
+  if(i===questions[currentQ].answer) score++;
+}
+
+function nextQuestion(){
+  if(responses[currentQ]===undefined){ alert("Please choose an answer"); return; }
+  currentQ++;
+  if(currentQ<questions.length){ showQuestion(); }
+  else { finishTest(); }
+}
+
+function finishTest(){
+  document.getElementById("testSection").classList.add("hidden");
+  document.getElementById("resultSection").classList.remove("hidden");
+  document.getElementById("scoreText").innerText=
+    "Score: "+score+" / "+questions.length;
+  
+  let age=document.getElementById("age").value;
+  let gender=document.getElementById("gender").value;
+  let education=document.getElementById("education").value;
+  
+  let record={age,gender,education,score};
+  records.push(record);
+}
+
+function downloadCSV(){
+  let csv="Age,Gender,Education,Score\n";
+  records.forEach(r=>{
+    csv+=`${r.age},${r.gender},${r.education},${r.score}\n`;
+  });
+  let blob=new Blob([csv],{type:"text/csv"});
+  let a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download="results.csv";
+  a.click();
+}
+
+function restart(){
+  document.getElementById("resultSection").classList.add("hidden");
+  document.getElementById("startForm").classList.remove("hidden");
+}
+</script>
+</body>
+</html>
